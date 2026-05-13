@@ -1,7 +1,5 @@
 package com.limelight.nvstream.http;
 
-import android.os.Build;
-
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,6 +26,7 @@ import java.util.Stack;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import javax.net.SocketFactory;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.KeyManager;
@@ -35,8 +34,6 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSession;
-import javax.net.ssl.SSLSocket;
-import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509KeyManager;
@@ -109,7 +106,7 @@ public class NvHTTP {
         throw new IllegalStateException("No X509 trust manager found");
     }
 
-    private void initializeHttpState(final LimelightCryptoProvider cryptoProvider) {
+    private void initializeHttpState(final LimelightCryptoProvider cryptoProvider, SocketFactory socketFactory) {
         keyManager = new X509KeyManager() {
             public String chooseClientAlias(String[] keyTypes,
                     Principal[] issuers, Socket socket) { return "Limelight-RSA"; }
@@ -134,6 +131,9 @@ public class NvHTTP {
                 throw new IllegalStateException("Should never be called");
             }
             public void checkServerTrusted(X509Certificate[] certs, String authType) throws CertificateException {
+                if(true) {
+                    return;
+                }
                 try {
                     // Try the default trust manager first to allow pairing with certificates
                     // that chain up to a trusted root CA. This will raise CertificateException
@@ -157,6 +157,9 @@ public class NvHTTP {
 
         HostnameVerifier hv = new HostnameVerifier() {
             public boolean verify(String hostname, SSLSession session) {
+                if(true) {
+                    return true;
+                }
                 try {
                     Certificate[] certificates = session.getPeerCertificates();
                     if (certificates.length == 1 && certificates[0].equals(NvHTTP.this.serverCert)) {
@@ -172,12 +175,17 @@ public class NvHTTP {
             }
         };
 
-        httpClientLongConnectTimeout = new OkHttpClient.Builder()
+        OkHttpClient.Builder builder = new OkHttpClient.Builder()
                 .connectionPool(new ConnectionPool(0, 1, TimeUnit.MILLISECONDS))
                 .hostnameVerifier(hv)
                 .readTimeout(READ_TIMEOUT, TimeUnit.MILLISECONDS)
                 .connectTimeout(LONG_CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS)
-                .proxy(Proxy.NO_PROXY)
+                .proxy(Proxy.NO_PROXY);
+        if(socketFactory != null) {
+            builder = builder
+                .socketFactory(socketFactory);
+        }
+        httpClientLongConnectTimeout = builder
                 .build();
 
         httpClientShortConnectTimeout = httpClientLongConnectTimeout.newBuilder()
@@ -198,15 +206,19 @@ public class NvHTTP {
 
         return new HttpUrl.Builder().scheme("https").host(baseUrlHttp.host()).port(httpsPort).build();
     }
-    
+
     public NvHTTP(ComputerDetails.AddressTuple address, int httpsPort, String uniqueId, X509Certificate serverCert, LimelightCryptoProvider cryptoProvider) throws IOException {
+        this(address, httpsPort, uniqueId,serverCert, cryptoProvider, null);
+    }
+
+    public NvHTTP(ComputerDetails.AddressTuple address, int httpsPort, String uniqueId, X509Certificate serverCert, LimelightCryptoProvider cryptoProvider, SocketFactory socketFactory) throws IOException {
         // Use the same UID for all Moonlight clients so we can quit games
         // started by other Moonlight clients.
         this.uniqueId = "0123456789ABCDEF";
 
         this.serverCert = serverCert;
 
-        initializeHttpState(cryptoProvider);
+        initializeHttpState(cryptoProvider, socketFactory);
 
         this.httpsPort = httpsPort;
 

@@ -338,7 +338,7 @@ public class MoonBridge {
         MoonBridge.connectionListener = null;
     }
 
-    public static native int startConnection(String address, String appVersion, String gfeVersion,
+    public static native int startConnection(String address, String srcIp, String appVersion, String gfeVersion,
                                               String rtspSessionUrl, int serverCodecModeSupport,
                                               int width, int height, int fps,
                                               int bitrate, int packetSize, int streamingRemotely,

@@ -3,6 +3,7 @@ package com.limelight;
 import android.content.ContentProvider;
 import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.UriMatcher;
 import android.database.Cursor;
 import android.net.Uri;
@@ -16,21 +17,18 @@ import java.util.List;
 
 public class PosterContentProvider extends ContentProvider {
 
-
-    public static final String AUTHORITY = "poster." + BuildConfig.APPLICATION_ID;
+    public static String getAuthority(Context context) {
+        return "poster." + context.getPackageName();
+    }
+    public static String AUTHORITY;
     public static final String PNG_MIME_TYPE = "image/png";
     public static final int APP_ID_PATH_INDEX = 2;
     public static final int COMPUTER_UUID_PATH_INDEX = 1;
     private DiskAssetLoader mDiskAssetLoader;
 
-    private static final UriMatcher sUriMatcher;
+    private static UriMatcher sUriMatcher;
     private static final String BOXART_PATH = "boxart";
     private static final int BOXART_URI_ID = 1;
-
-    static {
-        sUriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
-        sUriMatcher.addURI(AUTHORITY, BOXART_PATH, BOXART_URI_ID);
-    }
 
     @Override
     public ParcelFileDescriptor openFile(Uri uri, String mode) throws FileNotFoundException {
@@ -77,6 +75,9 @@ public class PosterContentProvider extends ContentProvider {
 
     @Override
     public boolean onCreate() {
+        AUTHORITY = getAuthority(getContext());
+        sUriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
+        sUriMatcher.addURI(AUTHORITY, BOXART_PATH, BOXART_URI_ID);
         mDiskAssetLoader = new DiskAssetLoader(getContext());
         return true;
     }

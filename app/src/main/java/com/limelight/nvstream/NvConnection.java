@@ -19,18 +19,18 @@ import java.nio.ByteBuffer;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.Semaphore;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
+import javax.net.SocketFactory;
 
 import org.xmlpull.v1.XmlPullParserException;
 
 import com.limelight.LimeLog;
 import com.limelight.nvstream.av.audio.AudioRenderer;
 import com.limelight.nvstream.av.video.VideoDecoderRenderer;
+import com.limelight.nvstream.http.BoundSocketFactory;
 import com.limelight.nvstream.http.ComputerDetails;
 import com.limelight.nvstream.http.HostHttpResponseException;
 import com.limelight.nvstream.http.LimelightCryptoProvider;
@@ -49,7 +49,7 @@ public class NvConnection {
     private final boolean isMonkey;
     private final Context appContext;
 
-    public NvConnection(Context appContext, ComputerDetails.AddressTuple host, int httpsPort, String uniqueId, StreamConfiguration config, LimelightCryptoProvider cryptoProvider, X509Certificate serverCert)
+    public NvConnection(Context appContext, ComputerDetails.AddressTuple host, int httpsPort, String srcHost, String uniqueId, StreamConfiguration config, LimelightCryptoProvider cryptoProvider, X509Certificate serverCert)
     {
         this.appContext = appContext;
         this.cryptoProvider = cryptoProvider;
@@ -60,6 +60,7 @@ public class NvConnection {
         this.context.httpsPort = httpsPort;
         this.context.streamConfig = config;
         this.context.serverCert = serverCert;
+        this.context.srcIP = srcHost;
 
         // This is unique per connection
         this.context.riKey = generateRiAesKey();
@@ -221,7 +222,11 @@ public class NvConnection {
     
     private boolean startApp() throws XmlPullParserException, IOException
     {
-        NvHTTP h = new NvHTTP(context.serverAddress, context.httpsPort, uniqueId, context.serverCert, cryptoProvider);
+        SocketFactory socketFactory = null;
+        if(this.context.srcIP != null && !this.context.srcIP.isEmpty()) {
+            socketFactory = new BoundSocketFactory(InetAddress.getByName(this.context.srcIP));
+        }
+        NvHTTP h = new NvHTTP(context.serverAddress, context.httpsPort, uniqueId, context.serverCert, cryptoProvider, socketFactory);
 
         String serverInfo = h.getServerInfo(true);
         
@@ -425,7 +430,7 @@ public class NvConnection {
                 // we must not invoke that functionality in parallel.
                 synchronized (MoonBridge.class) {
                     MoonBridge.setupBridge(videoDecoderRenderer, audioRenderer, connectionListener);
-                    int ret = MoonBridge.startConnection(context.serverAddress.address,
+                    int ret = MoonBridge.startConnection(context.serverAddress.address, context.srcIP,
                             context.serverAppVersion, context.serverGfeVersion, context.rtspSessionUrl,
                             context.serverCodecModeSupport,
                             context.negotiatedWidth, context.negotiatedHeight,

@@ -453,7 +453,7 @@ hasFastAes() {
 
 JNIEXPORT jint JNICALL
 Java_com_limelight_nvstream_jni_MoonBridge_startConnection(JNIEnv *env, jclass clazz,
-                                                           jstring address, jstring appVersion, jstring gfeVersion,
+                                                           jstring address, jstring srcIp, jstring appVersion, jstring gfeVersion,
                                                            jstring rtspSessionUrl, jint serverCodecModeSupport,
                                                            jint width, jint height, jint fps,
                                                            jint bitrate, jint packetSize, jint streamingRemotely,
@@ -464,6 +464,7 @@ Java_com_limelight_nvstream_jni_MoonBridge_startConnection(JNIEnv *env, jclass c
                                                            jint colorSpace, jint colorRange) {
     SERVER_INFORMATION serverInfo = {
             .address = (*env)->GetStringUTFChars(env, address, 0),
+            .srcIp = (*env)->GetStringUTFChars(env, srcIp, 0),
             .serverInfoAppVersion = (*env)->GetStringUTFChars(env, appVersion, 0),
             .serverInfoGfeVersion = gfeVersion ? (*env)->GetStringUTFChars(env, gfeVersion, 0) : NULL,
             .rtspSessionUrl = rtspSessionUrl ? (*env)->GetStringUTFChars(env, rtspSessionUrl, 0) : NULL,
@@ -508,6 +509,7 @@ Java_com_limelight_nvstream_jni_MoonBridge_startConnection(JNIEnv *env, jclass c
                                 NULL, 0);
 
     (*env)->ReleaseStringUTFChars(env, address, serverInfo.address);
+    (*env)->ReleaseStringUTFChars(env, srcIp, serverInfo.srcIp);
     (*env)->ReleaseStringUTFChars(env, appVersion, serverInfo.serverInfoAppVersion);
     if (gfeVersion != NULL) {
         (*env)->ReleaseStringUTFChars(env, gfeVersion, serverInfo.serverInfoGfeVersion);
