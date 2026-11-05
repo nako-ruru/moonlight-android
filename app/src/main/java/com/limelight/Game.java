@@ -92,6 +92,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         OnGenericMotionListener, OnTouchListener, NvConnectionListener, EvdevListener,
         OnSystemUiVisibilityChangeListener, GameGestures, StreamView.InputCallbacks,
         PerfOverlayListener, UsbDriverService.UsbDriverStateListener, View.OnKeyListener {
+    public static NvConnectionListener listener;
     private int lastButtonState = 0;
 
     // Only 2 touches are supported
@@ -2290,6 +2291,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
 
     @Override
     public void connectionTerminated(final int errorCode) {
+        if (listener != null) {
+            listener.connectionTerminated(errorCode);
+        }
         // Perform a connection test if the failure could be due to a blocked port
         // This does network I/O, so don't do it on the main thread.
         final int portFlags = MoonBridge.getPortFlagsFromTerminationErrorCode(errorCode);
@@ -2403,6 +2407,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
 
     @Override
     public void connectionStarted() {
+        if (listener != null) {
+            listener.connectionStarted();
+        }
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
