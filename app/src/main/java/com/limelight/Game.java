@@ -23,6 +23,7 @@ import com.limelight.nvstream.StreamConfiguration;
 import com.limelight.nvstream.http.ComputerDetails;
 import com.limelight.nvstream.http.NvApp;
 import com.limelight.nvstream.http.NvHTTP;
+import com.limelight.nvstream.input.ControllerPacket;
 import com.limelight.nvstream.input.KeyboardPacket;
 import com.limelight.nvstream.input.MouseButtonPacket;
 import com.limelight.nvstream.jni.MoonBridge;
@@ -172,7 +173,6 @@ public class Game extends Activity implements SurfaceHolder.Callback,
     public static final String EXTRA_HOST = "Host";
     public static final String EXTRA_PORT = "Port";
     public static final String EXTRA_HTTPS_PORT = "HttpsPort";
-    public static final String EXTRA_SRC_IP = "SrcHost";
     public static final String EXTRA_APP_NAME = "AppName";
     public static final String EXTRA_APP_ID = "AppId";
     public static final String EXTRA_UNIQUEID = "UniqueId";
@@ -315,7 +315,6 @@ public class Game extends Activity implements SurfaceHolder.Callback,
 
         String host = Game.this.getIntent().getStringExtra(EXTRA_HOST);
         int port = Game.this.getIntent().getIntExtra(EXTRA_PORT, NvHTTP.DEFAULT_HTTP_PORT);
-        String srcHost = Game.this.getIntent().getStringExtra(EXTRA_SRC_IP);
         int httpsPort = Game.this.getIntent().getIntExtra(EXTRA_HTTPS_PORT, 0); // 0 is treated as unknown
         int appId = Game.this.getIntent().getIntExtra(EXTRA_APP_ID, StreamConfiguration.INVALID_APP_ID);
         String uniqueId = Game.this.getIntent().getStringExtra(EXTRA_UNIQUEID);
@@ -488,8 +487,8 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         // Initialize the connection
         conn = new NvConnection(getApplicationContext(),
                 new ComputerDetails.AddressTuple(host, port),
-                httpsPort, srcHost, uniqueId,
-                config, PlatformBinding.getCryptoProvider(this), serverCert);
+                httpsPort, uniqueId, config,
+                PlatformBinding.getCryptoProvider(this), serverCert);
         controllerHandler = new ControllerHandler(this, conn, this, prefConfig);
         keyboardTranslator = new KeyboardTranslator();
 

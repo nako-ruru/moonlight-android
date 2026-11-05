@@ -52,16 +52,12 @@ public class ServerHelper {
         return i;
     }
 
-
-    public static Intent createStartIntent(Activity parent, NvApp app, ComputerDetails computer, String srcIP,
+    public static Intent createStartIntent(Activity parent, NvApp app, ComputerDetails computer,
                                            ComputerManagerService.ComputerManagerBinder managerBinder) {
         Intent intent = new Intent(parent, Game.class);
         intent.putExtra(Game.EXTRA_HOST, computer.activeAddress.address);
         intent.putExtra(Game.EXTRA_PORT, computer.activeAddress.port);
         intent.putExtra(Game.EXTRA_HTTPS_PORT, computer.httpsPort);
-        if(srcIP != null && !srcIP.trim().isEmpty()) {
-            intent.putExtra(Game.EXTRA_SRC_IP, srcIP);
-        }
         intent.putExtra(Game.EXTRA_APP_NAME, app.getAppName());
         intent.putExtra(Game.EXTRA_APP_ID, app.getAppId());
         intent.putExtra(Game.EXTRA_APP_HDR, app.isHdrSupported());
@@ -78,24 +74,13 @@ public class ServerHelper {
         return intent;
     }
 
-    public static Intent createStartIntent(Activity parent, NvApp app, ComputerDetails computer,
-                                           ComputerManagerService.ComputerManagerBinder managerBinder) {
-        return createStartIntent(parent, app, computer, null, managerBinder);
-    }
-
-
-    public static void doStart(Activity parent, NvApp app, ComputerDetails computer, String srcIP,
+    public static void doStart(Activity parent, NvApp app, ComputerDetails computer,
                                ComputerManagerService.ComputerManagerBinder managerBinder) {
         if (computer.state == ComputerDetails.State.OFFLINE || computer.activeAddress == null) {
             Toast.makeText(parent, parent.getResources().getString(R.string.pair_pc_offline), Toast.LENGTH_SHORT).show();
             return;
         }
-        parent.startActivity(createStartIntent(parent, app, computer, srcIP, managerBinder));
-    }
-
-    public static void doStart(Activity parent, NvApp app, ComputerDetails computer,
-                               ComputerManagerService.ComputerManagerBinder managerBinder) {
-        doStart(parent, app, computer, null, managerBinder);
+        parent.startActivity(createStartIntent(parent, app, computer, managerBinder));
     }
 
     public static void doNetworkTest(final Activity parent) {
